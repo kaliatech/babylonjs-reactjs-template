@@ -1,43 +1,53 @@
-import { useState } from 'react'
-import logo from './logo.svg'
-import './App.css'
+import React, { useEffect } from 'react'
+
+import { BabylonApp } from './BabylonApp'
+
+
+let strictModeBypass = import.meta.env.DEV
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const canvasRef = React.createRef<HTMLCanvasElement>()
+  let babylonApp: BabylonApp | undefined
+
+  useEffect(() => {
+    if (strictModeBypass && canvasRef.current) {
+      babylonApp = new BabylonApp(canvasRef.current)
+    }
+
+    // Setup resize handler
+    const onResize = () => {
+      babylonApp?.onResize()
+    }
+    if (window) {
+      window.addEventListener('resize', onResize)
+    }
+
+    return () => {
+      if (window) {
+        window.removeEventListener('resize', onResize)
+      }
+
+      if (strictModeBypass) {
+        strictModeBypass = false
+        return
+      } else {
+        babylonApp?.dispose()
+        strictModeBypass = true;
+      }
+    }
+
+  }, []) // empty array to run useEffect only once ...but doesn't work for React.StrictMode
+
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
+    <div className="app">
+      <header>
+        <h1>Babylon.js Test</h1>
       </header>
+      <main className="render-canvas-cont">
+        <canvas id="renderCanvas" className="render-canvas" ref={canvasRef} />
+      </main>
     </div>
   )
 }
