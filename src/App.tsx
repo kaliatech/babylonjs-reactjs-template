@@ -1,52 +1,46 @@
-import React, { useEffect } from 'react'
+import React, {useEffect, useRef} from 'react'
 
-import { BabylonApp } from './BabylonApp'
-
-
-let strictModeBypass = import.meta.env.DEV
+import {BabylonApp} from './BabylonApp'
+import styles from "./App.module.css"
 
 function App() {
 
-  const canvasRef = React.createRef<HTMLCanvasElement>()
-  let babylonApp: BabylonApp | undefined
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
+  const babylonAppRef = useRef<BabylonApp>(null)
 
   useEffect(() => {
-    if (strictModeBypass && canvasRef.current) {
-      babylonApp = new BabylonApp(canvasRef.current)
+    if (!canvasContainerRef.current) {
+      return
     }
 
-    // Setup resize handler
-    const onResize = () => {
-      babylonApp?.onResize()
-    }
-    if (window) {
-      window.addEventListener('resize', onResize)
-    }
+    // Dynamically create canvas element
+    // Doing this instead of placing canvas in JSX to avoid older undocumented problems
+    // with WebGL context and memory leaks. Might no longer be necessary.
+    const canvas = document.createElement('canvas')
+    canvas.className = styles.canvas
+    canvasContainerRef.current.appendChild(canvas)
+
+    // Initialize Babylon app
+    babylonAppRef.current = new BabylonApp(canvas)
+    //babylonAppRef.current.initAndRun()
 
     return () => {
-      if (window) {
-        window.removeEventListener('resize', onResize)
-      }
-
-      if (strictModeBypass) {
-        strictModeBypass = false
-        return
-      } else {
-        babylonApp?.dispose()
-        strictModeBypass = true;
+      babylonAppRef.current?.dispose()
+      babylonAppRef.current = null
+      if (canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas)
       }
     }
 
-  }, []) // empty array to run useEffect only once ...but doesn't work for React.StrictMode
+  }, [])
 
 
   return (
-    <div className="app">
+    <div className={styles.app}>
       <header>
         <h1>Babylon.js Test</h1>
       </header>
-      <main className="render-canvas-cont">
-        <canvas id="renderCanvas" className="render-canvas" ref={canvasRef} />
+      <main className="render-canvas-cont" ref={canvasContainerRef}>
       </main>
     </div>
   )
