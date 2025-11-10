@@ -28,7 +28,9 @@ export default defineConfig({
   },
   plugins: [basicSsl(), react()],
   server: {
-    port: 5443,
-    https: true,
+//    port: 5443,
+//    https: true,
+    port: 5080,
+    https: false,
   }
 })
